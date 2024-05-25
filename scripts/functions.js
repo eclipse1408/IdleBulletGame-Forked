@@ -517,7 +517,7 @@ function getWeaponName(weaponGroup) {
             default: temp += "";
             break;
             case 2:
-                    temp += "Dual ";
+                    temp += "Twin ";
                 break;
             case 3:
                     temp += "Triple ";
