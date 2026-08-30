@@ -1,8 +1,9 @@
 function PlayerAI() {
-    this.tick = function () {
+    this.tick = function (delta) {
         if (app.keys.pause === true) {
             return;
         }
+        var d = (delta !== undefined) ? delta : 1;
         if (app.keys.mouseLeft == true || app.keys.autofire === true) {
             for (var i = 0; i < this.weapon.weapons.length; i += 1) {
                 this.weapon.weapons[i].fire();
@@ -24,7 +25,7 @@ function PlayerAI() {
                 }
             }
         } else {
-            this.accel.x -= this.accel.x / 10;
+            this.accel.x *= Math.pow(0.9, d);
         }
         if (app.keys.s == true || app.keys.w == true) {
             if (app.keys.s == true && app.keys.w == true) {
@@ -39,26 +40,26 @@ function PlayerAI() {
                 }
             }
         } else {
-            this.accel.y -= this.accel.y / 10;
+            this.accel.y *= Math.pow(0.9, d);
         }
 
         if (!collidingWithWallX(this.position)) {
             if (((this.position.x + app.transform.x) - app.renderer.width / 2 > moveBorderX) && (this.accel.x > 0)) {
-                app.transform.x -= this.accel.x;
+                app.transform.x -= this.accel.x * d;
             }
 
             if (((this.position.x + app.transform.x) - app.renderer.width / 2 < -moveBorderX) && (this.accel.x < 0)) {
-                app.transform.x -= this.accel.x;
+                app.transform.x -= this.accel.x * d;
             }
         }
 
         if (!collidingWithWallY(this.position)) {
             if (((this.position.y + app.transform.y) - app.renderer.height / 2 > moveBorderY) && (this.accel.y > 0)) {
-                app.transform.y -= this.accel.y;
+                app.transform.y -= this.accel.y * d;
             }
 
             if (((this.position.y + app.transform.y) - app.renderer.height / 2 < -moveBorderY) && (this.accel.y < 0)) {
-                app.transform.y -= this.accel.y;
+                app.transform.y -= this.accel.y * d;
             }
         }
 
@@ -71,7 +72,7 @@ function PlayerAI() {
             this.weaponTarget = app.mouse.position;
             this.image.rotation = getAngleInRadians(this.position, app.mouse.position);
         } else {
-            this.autoDirection += toRadians(0.5);
+            this.autoDirection += toRadians(0.5) * d;
             if (this.autoDirection > toRadians(360)) {
                 this.autoDirection = 0;
             }
@@ -156,15 +157,16 @@ function PlayerAI() {
 }
 
 function SniperAi() {
-    this.tick = function () {
+    this.tick = function (delta) {
         if (app.keys.pause === true) {
             return;
         }
+        var d = (delta !== undefined) ? delta : 1;
         if (getDistanceFrom(this.position, app.player.position) > 150) {
             this.moveTarget = moveToPoint(app.player.position, this.position, 150);
             
         } else {
-            this.moveTarget = moveInDirection(app.player.position, 150, getAngleInRadians(app.player.position, this.position) + toRadians(10));
+            this.moveTarget = moveInDirection(app.player.position, 150, getAngleInRadians(app.player.position, this.position) + toRadians(10) * d);
         }
         
         for (var i = 2; i < app.players.children.length; i += 1) {
@@ -188,14 +190,15 @@ function SniperAi() {
 }
 
 function CloseAi() {
-    this.tick = function () {
+    this.tick = function (delta) {
         if (app.keys.pause === true) {
             return;
         }
+        var d = (delta !== undefined) ? delta : 1;
         if (getDistanceFrom(this.position, app.player.position) > 50) {
             this.moveTarget = moveToPoint(app.player.position, this.position, 50);
         } else {
-            this.moveTarget = moveInDirection(app.player.position, 50, getAngleInRadians(app.player.position, this.position) + toRadians(10));
+            this.moveTarget = moveInDirection(app.player.position, 50, getAngleInRadians(app.player.position, this.position) + toRadians(10) * d);
         }
         for (var i = 2; i < app.players.children.length; i += 1) {
             if ((getDistanceFrom(this.position, app.players.getChildAt(i).position) < 10) && (this != app.players.getChildAt(i))) {

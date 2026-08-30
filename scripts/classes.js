@@ -49,12 +49,12 @@ function Mouse() {
 function Moveable(speed) {
     this.speed = speed;
     this.accel = new PIXI.Point(0, 0);
-    this.update = function () {
+    this.update = function (delta) {
         if (app.keys.pause === true) {
             return;
         }
-        this.position.x += this.accel.x;
-        this.position.y += this.accel.y;
+        this.position.x += this.accel.x * delta;
+        this.position.y += this.accel.y * delta;
     };
 
     app.ticker.add(this.update, this);
@@ -417,7 +417,7 @@ function Weapon(id, power, rarity, type) {
     this.maxUse = this.type.useTime;
     this.curUse = this.maxUse;
     this.fire = function () {
-        if (this.curUse === 0) {
+        if (this.curUse <= 0) {
             new Bullet(this, getEntity(this.entityID), this.type.image, getBonusFromReload(this.maxUse, getEntity(this.entityID).team),
                 function () {
                     this.tint = getPlayerColour();
@@ -426,9 +426,10 @@ function Weapon(id, power, rarity, type) {
         }
     }
 
-    this.reload = function () {
+    this.reload = function (delta) {
+        var d = (delta !== undefined) ? delta : 1;
         if (this.curUse > 0) {
-            this.curUse -= 1;
+            this.curUse -= d;
         }
     };
 }
@@ -467,12 +468,16 @@ function Armour(power, team) {
 
     this.maxRegen = 0.2;
     this.curRegen = 0.01;
+    this.regenAccumulator = 0;
 
-    this.regenFunction = function () {
+    this.regenFunction = function (delta) {
         if (app.keys.pause === true) {
             return;
         }
-        if (app.tick % 20 == 0) {
+        var d = (delta !== undefined) ? delta : 1;
+        this.regenAccumulator += d;
+        if (this.regenAccumulator >= 20) {
+            this.regenAccumulator -= 20;
             if (this.curHP.lt(this.getMaxHP(app.upgrades.slots[2].power))) {
                 this.curHP = this.curHP.add(this.curHP.mul(this.curRegen));
                 if (this.curHP.gt(this.getMaxHP(app.upgrades.slots[2].power))) {
@@ -511,12 +516,16 @@ function LoadArmour(storedArmour) {
 
     this.maxRegen = 0.2;
     this.curRegen = 0.01;
+    this.regenAccumulator = 0;
 
-    this.regenFunction = function () {
+    this.regenFunction = function (delta) {
         if (app.keys.pause === true) {
             return;
         }
-        if (app.tick % 20 == 0) {
+        var d = (delta !== undefined) ? delta : 1;
+        this.regenAccumulator += d;
+        if (this.regenAccumulator >= 20) {
+            this.regenAccumulator -= 20;
             if (this.curHP.lt(this.getMaxHP(app.upgrades.slots[2].power))) {
                 this.curHP = this.curHP.add(this.curHP.mul(this.curRegen));
                 if (this.curHP.gt(this.getMaxHP(app.upgrades.slots[2].power))) {
@@ -581,9 +590,9 @@ function PopUpEntity(position, text, value) {
         return;
     }
 
-    this.tick = function () {
-
-        this.curLifetime -= 1;
+    this.tick = function (delta) {
+        var d = (delta !== undefined) ? delta : 1;
+        this.curLifetime -= d;
 
         if (this.curLifetime <= 10) {
             this.alpha = this.curLifetime * 0.1;
@@ -664,19 +673,20 @@ function Bullet(weapon, entity, texture, bonusDamage, moveFunction, moveConsts, 
         return;
     }
 
-    this.tick = function () {
+    this.tick = function (delta) {
+        var d = (delta !== undefined) ? delta : 1;
         this.visible = app.keys.hideBullets;
         if (app.keys.pause === true) {
             return;
         }
 
-        this.curLifetime -= 1;
+        this.curLifetime -= d;
 
         if (this.curLifetime <= 10) {
             this.alpha = this.curLifetime * 0.1;
         }
 
-        if ((this.curLifetime == 0) || collidingWithWall(this.position)) {
+        if ((this.curLifetime <= 0) || collidingWithWall(this.position)) {
             this.delete();
             return;
         }
@@ -699,7 +709,7 @@ function Bullet(weapon, entity, texture, bonusDamage, moveFunction, moveConsts, 
 
             if (this.target !== null) {
 
-                var maxRotation = toRadians(5);
+                var maxRotation = toRadians(5) * d;
 
                 var angleToRotate = getAngleInRadians(this.position, this.target);
 
