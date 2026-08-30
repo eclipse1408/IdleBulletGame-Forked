@@ -124,15 +124,8 @@ function init() {
 
     app.pauseText = new PIXI.Text("Game paused press P to unpause", style);
 
-    var moneyAccumulator = 0;
-    app.ticker.add(function (delta) {
-        if (app.keys.pause === true) {
-            return;
-        }
-        var d = (delta !== undefined) ? delta : 1;
-        moneyAccumulator += d;
-        if (moneyAccumulator >= 60) {
-            moneyAccumulator -= 60;
+    app.ticker.add(function () {
+        if (app.tick % 60 === 0) {
             app.money.curMoney = app.money.curMoney.add(app.money.highestMoneyGainRate.mul(app.money.moneyGainBonus));
             if (app.keys.pause === false) {
                 var average = new Decimal(0);
@@ -506,19 +499,14 @@ function init() {
         app.player.armour = app.inventory.slotAreas[1].slot;
     }
 
-    var spawnAccumulator = 0;
-    var saveAccumulator = 0;
-    app.ticker.add(function (delta) {
-        var d = (delta !== undefined) ? delta : 1;
-        app.tick += d;
+    app.ticker.add(function () {
+        app.tick += 1;
         if (app.keys.pause === true) {
             return;
         }
 
-        spawnAccumulator += d;
-        if (((spawnAccumulator >= 30) || (app.wave.enemiesOnScreen <= 4)) && (app.wave.enemiesInWave > 0) &&
+        if (((app.tick % 30 == 0) || (app.wave.enemiesOnScreen <= 4)) && (app.wave.enemiesInWave > 0) &&
             (app.wave.enemiesOnScreen < 5)) {
-            spawnAccumulator = 0;
             var temp = moveInDirection(app.player.position, 1000 * Math.random() + 300, toRadians(360 * Math.random()));
 
             while (collidingWithWall(temp)) {
@@ -548,9 +536,7 @@ function init() {
             }
         }
 
-        saveAccumulator += d;
-        if ((saveAccumulator >= 1200) && (storageAvailable('localStorage'))) {
-            saveAccumulator -= 1200;
+        if ((app.tick % 1200 === 0) && (storageAvailable('localStorage'))) {
             console.log("saved");
             var numItems = 0;
             for (var i = 0; i < app.inventory.slotAreas.length; i += 1) {
